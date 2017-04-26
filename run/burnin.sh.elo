@@ -1,0 +1,99 @@
+#!/bin/bash
+
+#mmcblk2: SD card
+#mmcblk1: EMMC
+#		mmcblk1p1: None
+#		mmcblk1p2: Read/Write test partition
+#		mmcblk1p3: Log partition
+
+
+log_partition_init() {
+        #if [[ ! -e "/dev/$1p2" ]]; then
+            #echo "Create log partition"
+			
+			dd if=/dev/zero of=/dev/$1 bs=1M count=1 &>/dev/null
+			
+fdisk /dev/$1 &>/dev/null << EOF
+n
+p
+2
+
++1024M
+n
+p
+3
+
+
+a
+1
+w
+q
+EOF
+			
+			partprobe
+			sync && sync && sleep 1
+			mkfs.ext4 /dev/$1p2 &>/dev/null
+			mkfs.ext4 /dev/$1p3 &>/dev/null
+                        sync && sync && sleep 1
+			mkdir -p /usr/advtest/tool/burnin/log/
+			mkdir -p /usr/advtest/tool/burnin/test/emmc_test
+			echo "Mount log partition to /usr/advtest/tool/burnin/log"
+			mount /dev/$1p2 /usr/advtest/tool/burnin/test/emmc_test &>/dev/null
+			mount /dev/$1p3 /usr/advtest/tool/burnin/log &>/dev/null
+        #else
+		#		echo "log partition exist"
+        #        mountpoint=`mount |grep "/dev/${1}p2" |awk '{print $3}'`
+        #        if [[ $mountpoint == "" ]]; then
+        #                mkdir -p /usr/advtest/tool/burnin/log/
+        #                echo "Mount log partition to /usr/advtest/tool/burnin/log"
+        #                mount /dev/$1p2 /usr/advtest/tool/burnin/log &>/dev/null
+        #        else
+        #                echo "The log partition has been mounted on the $mountpoint"
+        #        fi
+
+        #fi
+
+}
+
+#mkdir -p /usr/advtest/tool/burnin/data/video
+#if [ ! -f "/usr/advtet/tool/burnin/data/video/1.mp4" ]; then
+#	echo "please put 1.mp4 in /usr/advtet/tool/burnin/data/video/"
+#	exit 1
+#fi
+
+if [ -d /usr/advtest/tool/burnin/log ]; then
+	rm -rf /usr/advtest/tool/burnin/log/
+fi
+
+cd /usr/advtest/tool/burnin/
+umount /dev/mmcblk1p1 2>/dev/null 1>/dev/null
+umount /dev/mmcblk1p2 2>/dev/null 1>/dev/null
+umount /dev/mmcblk1p3 2>/dev/null 1>/dev/null
+umount /run/media/* 2>/dev/null 1>/dev/null
+
+echo "Wait for 2 min to fomat eMMC partition"
+log_partition_init mmcblk1 &>/dev/null
+
+
+sleep 5
+
+
+
+#./scripts/burnin_ethernet.sh eth0 0 HOST0 2>&1 &
+#./scripts/burnin_ethernet.sh eth1 0 2>&1 &
+#./scripts/burnin_wifi.sh 0 2>&1 &
+#./scripts/burnin_cpueater.sh 10 2>&1 &
+#./scripts/burnin_memory.sh 0 2>&1 &
+#./scripts/burnin_emmc.sh mmcblk2p1 0 eMMC 2>&1 & #SD card
+#./scripts/burnin_emmc.sh mmcblk1p2 0 eMMC 2>&1 & #eMMC
+#./scripts/burnin_udisk.sh sda1 0 USB 2>&1 &
+#./scripts/burnin_udisk.sh sdb1 0 USB 2>&1 &
+#./scripts/burnin_udisk.sh sdc1 0 USB 2>&1 &
+#./scripts/burnin_udisk.sh sdd1 0 USB 2>&1 &
+#./scripts/burnin_udisk.sh sde1 0 USB 2>&1 &
+#./scripts/burnin_udisk.sh sdf1 0 USB 2>&1 &
+#./scripts/burnin_play_audio.sh 0 2>&1 &
+#./scripts/burnin_temperature.sh 0 1 2>&1 &
+#./scripts/burnin_frequency.sh 0 1 2>&1 &
+#./scripts/burnin_play_video.sh 0 2>&1 &
+

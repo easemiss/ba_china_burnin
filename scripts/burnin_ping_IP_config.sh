@@ -1,0 +1,5 @@
+#HOST1(PC) IP:
+HOST0_IP=192.168.0.1 
+#ELO Eth0 IP:
+eth0_IP=192.168.0.2  
+
